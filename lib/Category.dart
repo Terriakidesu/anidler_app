@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'anidler.dart';
-import 'anidlerGetter.dart';
+import 'Anidler.dart';
+import 'AnidlerGetter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart'
+    as extend;
 
 class CategoryArguments {
   final String title;
@@ -36,13 +38,20 @@ class _Category extends StatefulWidget {
 class _CategoryState extends State<_Category> {
   String imageUrl =
       "https://via.placeholder.com/192x256.png/000000/FFFFFF?text=Image";
-
   Map<String, String> info = {
     "synopsis": "",
     "genres": "",
     "released": "",
     "status": "",
     "otherNames": ""
+  };
+
+  Map<String, dynamic> ajax = {
+    "id": "",
+    "alias": "",
+    "default_ep": "",
+    "ep_start": 0,
+    "ep_end": 0
   };
 
   @override
@@ -62,6 +71,12 @@ class _CategoryState extends State<_Category> {
     info["status"] = result.status;
     info["otherNames"] = result.otherNames;
 
+    ajax["id"] = result.id;
+    ajax["alias"] = result.alias;
+    ajax["default_ep"] = result.defaultEp;
+    ajax["ep_start"] = result.epStart;
+    ajax["ep_end"] = result.epEnd;
+
     setState(() {});
   }
 
@@ -71,63 +86,76 @@ class _CategoryState extends State<_Category> {
       length: 2,
       child: SafeArea(
         child: Scaffold(
-          body: NestedScrollView(
+          body: extend.NestedScrollView(
             headerSliverBuilder: (BuildContext context, innerBoxIsScrolled) {
               return <Widget>[
-                SliverOverlapAbsorber(
-                  handle:
-                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                  sliver: SliverAppBar(
-                    title: Text(
-                      widget.args.title,
-                      style: const TextStyle(
-                        shadows: [
-                          Shadow(
-                            color: Color.fromARGB(192, 0, 0, 0),
-                            blurRadius: 10.0,
-                          ),
-                        ],
-                      ),
-                    ),
-                    flexibleSpace: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CachedNetworkImage(
-                          fit: BoxFit.cover,
-                          imageUrl: imageUrl,
-                          progressIndicatorBuilder: (context, value, progress) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
+                SliverAppBar(
+                  title: Text(
+                    widget.args.title,
+                    style: const TextStyle(
+                      shadows: [
+                        Shadow(
+                          color: Color.fromARGB(192, 0, 0, 0),
+                          blurRadius: 10.0,
                         ),
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.center,
-                              colors: [
-                                Color.fromARGB(136, 0, 0, 0),
-                                Color(0x00000000),
-                              ],
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    pinned: true,
-                    expandedHeight: 250.0,
-                    forceElevated: innerBoxIsScrolled,
-                    bottom: const TabBar(
-                      labelPadding: EdgeInsets.all(5.0),
-                      indicatorColor: Colors.orange,
-                      tabs: [
-                        Tab(icon: FaIcon(FontAwesomeIcons.info)),
-                        Tab(icon: FaIcon(FontAwesomeIcons.list))
                       ],
                     ),
                   ),
-                )
+                  flexibleSpace: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        fit: BoxFit.cover,
+                        imageUrl: imageUrl,
+                        progressIndicatorBuilder: (context, value, progress) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.center,
+                            colors: [
+                              Color.fromARGB(136, 0, 0, 0),
+                              Color(0x00000000),
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                  pinned: true,
+                  expandedHeight: 250.0,
+                  bottom: const TabBar(
+                    labelPadding: EdgeInsets.all(1.0),
+                    indicatorWeight: 2.0,
+                    indicatorColor: Colors.orange,
+                    labelColor: Colors.orange,
+                    unselectedLabelColor: Colors.white,
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 10.0,
+                        ),
+                      ],
+                    ),
+                    tabs: [
+                      Tab(
+                        icon: FaIcon(FontAwesomeIcons.info),
+                        text: "INFO",
+                      ),
+                      Tab(
+                        icon: FaIcon(FontAwesomeIcons.list),
+                        text: "EPISODES",
+                      )
+                    ],
+                  ),
+                ),
               ];
             },
             body: TabBarView(
@@ -137,9 +165,15 @@ class _CategoryState extends State<_Category> {
                       .map(
                         (e) => Card(
                           child: ListTile(
+                            contentPadding: const EdgeInsets.all(5.0),
                             title: Text(
-                              e.toUpperCase(),
-                              style: const TextStyle(color: Colors.orange),
+                              e.toUpperCase() == "OTHERNAMES"
+                                  ? "OTHER NAME"
+                                  : e.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(info[e]!),
                           ),
@@ -147,11 +181,35 @@ class _CategoryState extends State<_Category> {
                       )
                       .toList(),
                 ),
-                const Text("Tab 2"),
+                _EpisodeListWindow(ajax),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EpisodeListWindow extends StatefulWidget {
+  const _EpisodeListWindow(this.ajax);
+
+  final ajax;
+
+  @override
+  _EpisodeListState createState() => _EpisodeListState();
+}
+
+class _EpisodeListState extends State<_EpisodeListWindow> {
+  Future<void> _refresh() async {}
+
+  @override
+  Widget build(BuildContext context) {
+    print(widget.ajax);
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        children: [Text("Some Text")],
       ),
     );
   }

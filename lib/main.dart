@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'anidler.dart';
-import 'anidlerGetter.dart';
+import 'Anidler.dart';
+import 'AnidlerGetter.dart';
 import 'Category.dart';
 
 void main() {

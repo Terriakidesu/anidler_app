@@ -37,6 +37,7 @@ dependencies:
   chaleno: ^0.0.6
   font_awesome_flutter: ^9.2.0
   cached_network_image:  ^3.2.0
+  extended_nested_scroll_view: ^3.0.0
 
 dev_dependencies:
   flutter_test:
