@@ -84,17 +84,20 @@ class Anidler {
   Future<AnimeCategory?> getCategory(String route) async {
     var parser = await _request(_parseURLFromRoute(route, {}));
 
-    return AnimeCategory(parser);
+    Result result = parser!.querySelector("div.main_body");
+
+    return AnimeCategory(result);
   }
 }
 
 class AnimeCategory {
   String name = "";
-  String type = "";
   String image = "";
-  String sypnosis = "";
-  String released = "";
+  String type = "";
+  String synopsis = "";
   List<Genre> genres = [];
+  String genresText = "";
+  String released = "";
   String status = "";
   String otherNames = "";
 
@@ -109,43 +112,38 @@ class AnimeCategory {
   String defaultEp = "0";
   String alias = "";
 
-  AnimeCategory(Parser? payload) {
-    name = payload!.querySelector("anime_info_body_bg>h1").text!.trim();
-    type = payload.querySelector("anime_info_body_bg>p:nth-child(1)>a").title!;
-    sypnosis = payload
-        .querySelector("anime_info_body_bg>p:nth-child(2)>span")
-        .text!
-        .trim();
-    genres = payload
-        .querySelectorAll("anime_info_body_bg>p:nth-child(3)>a")
-        .map((e) => Genre(e))
-        .toList();
-    released = payload
-        .querySelector("anime_info_body_bg>p:nth-child(4)>a")
-        .text!
-        .replaceFirst(RegExp("Released:"), "")
-        .trim();
-    status =
-        payload.querySelector("anime_info_body_bg>p:nth-child(5)>a").title!;
-    otherNames = payload
-        .querySelector("anime_info_body_bg>p:nth-child(6)>a")
-        .text!
-        .replaceFirst(RegExp("Other name:"), "")
-        .trim();
+  AnimeCategory(Result? payload) {
+    Result body = payload!.querySelector("div.anime_info_body")!;
+    Result videoBody = payload.querySelector("div.anime_video_body")!;
 
-    var epList = payload.querySelectorAll("div.anime_video_body>ul>li");
-    startEpisode = int.parse(epList[0].attr("ep_start")!);
-    lastEpisode = int.parse(epList[epList.length - 1].attr("ep_end")!);
+    name = body.querySelector("div.anime_info_body_bg>h1")!.text!;
+    image = body.querySelector("div.anime_info_body_bg>img")!.src!;
+    List<Result> types =
+        payload.querySelectorAll("div.anime_info_body_bg>p.type")!;
+
+    type = types[0].querySelector("a")!.title!;
+    synopsis = types[1].text!.replaceFirst(RegExp(r"Plot Summary:"), "").trim();
+    genres = types[2].querySelectorAll("a")!.map((e) => Genre(e)).toList();
+    genresText = genres.map((e) => e.name).toList().join(", ");
+    released = types[3].text!.replaceFirst(RegExp(r"Released:"), "").trim();
+    status = types[4].querySelector("a")!.title!;
+    otherNames = types[5].text!.replaceFirst(RegExp(r"Other name:"), "").trim();
+
+    var epList = videoBody.querySelectorAll("ul#episode_page>li");
+
+    startEpisode = int.parse(epList![0].querySelector("a")!.attr("ep_start")!);
+    lastEpisode = int.parse(
+        epList[epList.length - 1].querySelector("a")!.attr("ep_end")!);
 
     // ajax
     id = payload
-        .querySelector("div.anime_info_episodes_next>input#movie_id")
+        .querySelector("div.anime_info_episodes_next>input.movie_id")!
         .attr("value")!;
     defaultEp = payload
-        .querySelector("div.anime_info_episodes_next>input#default_ep")
+        .querySelector("div.anime_info_episodes_next>input.default_ep")!
         .attr("value")!;
     alias = payload
-        .querySelector("div.anime_info_episodes_next>input#alias_name")
+        .querySelector("div.anime_info_episodes_next>input.alias_anime")!
         .attr("value")!;
   }
 }

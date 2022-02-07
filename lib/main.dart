@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'anidler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-Anidler anidler = Anidler();
+import 'anidler.dart';
+import 'anidlerGetter.dart';
+import 'Category.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +30,7 @@ class MyApp extends StatelessWidget {
         initialRoute: "/",
         routes: {
           "/search": (context) => _SearchWindow(),
-          "/category": (context) => _CategoryWindow(),
+          "/category": (context) => CategoryWindow(),
         });
   }
 }
@@ -137,14 +140,14 @@ class _LatestTabState extends State<_LatestTab>
     for (NewEpisode result in results) {
       Widget child = InkWell(
         onTap: () async {
-          Navigator.pushNamed(
-            context,
-            "/category",
-            arguments: _CategoryArguments(
-              result.title,
-              await anidler.getCategory(result.href),
-            ),
-          );
+          // Navigator.pushNamed(
+          //   context,
+          //   "/category",
+          //   arguments: _CategoryArguments(
+          //     result.title,
+          //     await anidler.getCategory(result.href),
+          //   ),
+          // );
         },
         child: Container(
           clipBehavior: Clip.hardEdge,
@@ -155,7 +158,7 @@ class _LatestTabState extends State<_LatestTab>
             ],
             borderRadius: BorderRadius.circular(10.0),
             image: DecorationImage(
-              image: NetworkImage(result.image),
+              image: CachedNetworkImageProvider(result.image),
               fit: BoxFit.cover,
             ),
           ),
@@ -242,7 +245,7 @@ class _LatestTabState extends State<_LatestTab>
           setPage(-5);
           _refresh();
         },
-        child: const Icon(Icons.skip_previous_rounded),
+        child: const FaIcon(FontAwesomeIcons.angleDoubleLeft),
       ),
       const SizedBox(width: 10),
       ElevatedButton(
@@ -268,7 +271,7 @@ class _LatestTabState extends State<_LatestTab>
           setPage(5);
           _refresh();
         },
-        child: const Icon(Icons.skip_next_rounded),
+        child: const FaIcon(FontAwesomeIcons.angleDoubleRight),
       ),
     ]);
   }
@@ -355,9 +358,9 @@ class _TopTabState extends State<_TopTab> with AutomaticKeepAliveClientMixin {
           Navigator.pushNamed(
             context,
             "/category",
-            arguments: _CategoryArguments(
+            arguments: CategoryArguments(
               result.title,
-              await anidler.getCategory(result.href),
+              result.href,
             ),
           );
         },
@@ -373,7 +376,7 @@ class _TopTabState extends State<_TopTab> with AutomaticKeepAliveClientMixin {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(5.0),
                 image: DecorationImage(
-                  image: NetworkImage(result.image),
+                  image: CachedNetworkImageProvider(result.image),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -492,9 +495,9 @@ class _SearchBarState extends State<_SearchBar> {
           Navigator.pushNamed(
             context,
             "/category",
-            arguments: _CategoryArguments(
+            arguments: CategoryArguments(
               result.title,
-              await anidler.getCategory(result.href),
+              result.href,
             ),
           );
         },
@@ -507,7 +510,7 @@ class _SearchBarState extends State<_SearchBar> {
             ],
             borderRadius: BorderRadius.circular(10.0),
             image: DecorationImage(
-              image: NetworkImage(result.image),
+              image: CachedNetworkImageProvider(result.image),
               fit: BoxFit.cover,
             ),
           ),
@@ -695,29 +698,6 @@ class _SearchBarState extends State<_SearchBar> {
           _createNavigationButtons(),
           const SizedBox(height: 5),
         ],
-      ),
-    );
-  }
-}
-
-class _CategoryArguments {
-  final String title;
-  final AnimeCategory? payload;
-
-  _CategoryArguments(this.title, this.payload);
-}
-
-class _CategoryWindow extends StatelessWidget {
-  const _CategoryWindow({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as _CategoryArguments;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(args.title),
       ),
     );
   }
